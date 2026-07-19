@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>La Deuda Infinita | Proyecto para STEAM-H 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --green: #33ff33;
+            --dark-green: #004400;
+            --paper: #e0e0e0;
+            --error-red: #800000;
+            --active-red: #ff3333;
+        }
+
+        * { box-sizing: border-box; cursor: crosshair; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--green);
+            font-family: 'VT323', monospace;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.8s, filter 0.5s;
+        }
+
+        /* --- TELÉFONO (Z-INDEX 10) --- */
+        .phone {
+            width: 320px;
+            height: 620px;
+            background: #000;
+            border: 8px solid #1a1a1a;
+            border-radius: 45px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 10; 
+            box-shadow: 0 0 50px rgba(0,0,0,1);
+            transition: transform 0.1s;
+        }
+
+        @keyframes vibrate {
+            0% { transform: translate(0); }
+            20% { transform: translate(-8px, 5px) rotate(1deg); }
+            40% { transform: translate(8px, -5px) rotate(-1deg); }
+            60% { transform: translate(-8px, -5px) rotate(1deg); }
+            80% { transform: translate(8px, 5px) rotate(-1deg); }
+            100% { transform: translate(0); }
+        }
+        .vibrate-heavy { animation: vibrate 0.1s infinite; }
+
+        /* --- BOTONES (Z-INDEX 40 - SIEMPRE ARRIBA) --- */
+        .btn {
+            background: #111;
+            color: var(--green);
+            border: 2px solid var(--green);
+            border-radius: 15px;
+            padding: 16px;
+            margin-bottom: 18px;
+            font-family: 'VT323';
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            box-shadow: inset 0 0 10px var(--dark-green);
+            cursor: pointer;
+            position: relative;
+            z-index: 40; 
+        }
+        .btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        .debt-container {
+            width: 100%; height: 30px; border: 2px solid var(--green);
+            margin-top: auto; position: relative; overflow: hidden; z-index: 40;
+        }
+        .debt-fill { height: 100%; width: 0%; background: var(--green); transition: width 0.4s; }
+        .debt-text { position: absolute; width: 100%; text-align: center; top: 4px; color: #fff; mix-blend-mode: difference; }
+
+        /* --- EL TICKET (Z-INDEX 20 - SOBRE EL MÓVIL, BAJO BOTONES) --- */
+        #paper-world {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 20; 
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        #the-ticket {
+            position: absolute;
+            width: 260px;
+            background: var(--paper);
+            color: #111;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateX(120%) rotate(15deg); 
+        }
+
+        /* --- REVISIÓN (Z-INDEX 1000 - BLOQUEO TOTAL SIN BORDE DE PANTALLA) --- */
+        #the-ticket.review-mode {
+            pointer-events: auto !important;
+            z-index: 1000 !important;
+            position: fixed;
+            top: 50%; left: 50%;
+            /* Mantenemos una ligera rotación física y eliminamos el acople perfecto a los bordes del móvil */
+            transform: translate(-50%, -50%) rotate(-1deg) !important;
+            width: 310px !important;
+            max-height: 85vh !important;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+            border-radius: 0px !important; /* Asegura estética pura de papel */
+        }
+
+        .entry { padding: 15px; border-bottom: 1px dashed #bbb; font-size: 1.1rem; line-height: 1.2; }
+        .concept-title { color: #b00; font-weight: bold; font-size: 0.95rem; text-transform: uppercase; margin-top: 4px; display: block; }
+        .concept-def { font-size: 0.85rem; line-height: 1.1; opacity: 0.85; display: block; margin: 4px 0; }
+        
+        .jagged-edge {
+            width: 100%; height: 12px;
+            background: linear-gradient(-45deg, transparent 6px, var(--paper) 6px), 
+                        linear-gradient(45deg, transparent 6px, var(--paper) 6px);
+            background-size: 12px 12px;
+            flex-shrink: 0;
+        }
+
+        #final-impact-btn {
+            display: none; width: 90%; margin: 20px auto; background: #FE0000; color: #fff;
+            padding: 15px; border: 2px solid #fff; font-family: 'VT323'; font-size: 1.3rem; cursor: pointer;
+        }
+
+        /* --- EPÍLOGO Y TRAMPA --- */
+        #epilogue {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98); z-index: 2000; padding: 40px;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .modal-box { max-width: 600px; border: 2px solid var(--green); padding: 40px; text-align: center; background: #000;}
+
+        #trap-btn {
+            background: #111; color: #555; border: 2px solid #333;
+            border-radius: 15px; padding: 16px; font-family: 'VT323'; font-size: 1.4rem;
+            cursor: pointer; transition: 0.3s;
+        }
+        #trap-btn.active-trap {
+            background: var(--error-red); color: white; border-color: white;
+            animation: vibrate 0.1s infinite;
+        }
+        #trap-msg { color: var(--active-red); margin-top: 15px; font-weight: bold; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="phone" id="phone-ui">
+        <div style="text-align:center; margin-bottom:20px; opacity:0.6; z-index:40;"><h1>LA DEUDA INFINITA</h1></div>
+        <button class="btn" onclick="processAction('ai')">PREGUNTAR A CHATGPT</button>
+        <button class="btn" onclick="processAction('scroll')">VER TIKTOKS</button>
+        <button class="btn" onclick="processAction('buy')">COMPRAR NUEVOS AURICULARES</button>
+        
+        <div class="debt-container">
+            <div class="debt-fill" id="bar"></div>
+            <div class="debt-text">RESIDUOS ACUMULADOS: <span id="debt-val">0</span>%</div>
+        </div>
+    </div>
+
+    <div id="paper-world">
+        <div id="the-ticket">
+            <div class="entry" style="text-align: center; font-weight: bold;">*** TRAZA MATERIAL ***</div>
+            <div id="ticket-content"></div>
+            <button id="final-impact-btn" onclick="showEpilogue()">VER IMPACTO TOTAL</button>
+            <div class="jagged-edge"></div>
+        </div>
+    </div>
+
+    <div id="epilogue">
+        <div class="modal-box">
+            <div style="font-style:italic; font-size:1.6rem; color:#fff; margin-bottom:20px;">
+                "Somos la arqueología de un futuro que no querremos recordar."
+            </div>
+            <div style="color:var(--green); text-align:left; border-left: 2px solid var(--green); padding-left:15px; margin-bottom:25px; font-size:1.2rem;">
+                <strong>COLAPSO POR SISTEMA ASFIXIADO:</strong> La huella digital no se borra, se sedimenta. Has generado suficiente residuo para colapsar la interfaz física. El cobalto, el litio y el agua son ahora tu único registro permanente.
+            </div>
+            
+            <button id="trap-btn" onmouseover="armTrap()" onclick="triggerTrap()">BORRAR Y REINTENTAR</button>
+            <div id="trap-msg">ESTA ACCIÓN NO SE PUEDE BORRAR. EL RESIDUO ES PERMANENTE.</div>
+        </div>
+    </div>
+
+    <script>
+        let debt = 0;
+        let entries = 0;
+        let audioCtx = null;
+        let isBlocked = false;
+        
+        // Contadores individuales por botón para alternar de forma ordenada los conceptos
+        let aiClicks = 0;
+        let scrollClicks = 0;
+        let buyClicks = 0;
+
+        const ticket = document.getElementById('the-ticket');
+        const content = document.getElementById('ticket-content');
+
+        // BBDD local del Glosario Expandido
+        const glossary = {
+            ai: [
+                {
+                    title: "Materialidad Oculta",
+                    desc: "La falsa narrativa de lo digital como algo etéreo o 'en la nube'. Cada proceso algorítmico depende de una infraestructura física masiva de servidores, cables submarinos y sistemas de refrigeración que consumen recursos naturales críticos en territorios locales."
+                },
+                {
+                    title: "Extractivismo Algorítmico",
+                    desc: "La explotación invisible de mano de obra precarizada en el Sur Global para el entrenamiento de inteligencias artificiales. Se sostiene sobre millones de microtareas humanas de etiquetado de datos y moderación de contenido, a menudo con un alto coste psicológico."
+                }
+            ],
+            scroll: [
+                {
+                    title: "Residuo Cognitivo",
+                    desc: "La degradación de la atención y la memoria humana producida por las dinámicas de optimización algorítmica. Las plataformas digitales extraen nuestro tiempo mediante bucles de retroalimentación diseñados para monetizar la atención, generando saturación mental."
+                },
+                {
+                    title: "Capitalismo de Vigilancia",
+                    desc: "Modelo de negocio que mercantiliza la experiencia humana convirtiéndola en datos de comportamiento gratuitos. Estos datos se procesan como 'superávit conductual' para predecir y modificar nuestras pautas de consumo, convirtiendo nuestra actividad en desecho comercial."
+                }
+            ],
+            buy: [
+                {
+                    title: "Colonialismo Electrónico",
+                    desc: "El traslado asimétrico de los costes ambientales y de salud del Norte al Sur Global. Los dispositivos se fabrican extrayendo minerales de conflicto y se desechan de manera informal en vertederos del extranjero, externalizando la toxicidad hacia comunidades vulnerables."
+                },
+                {
+                    title: "Obsolescencia Programada",
+                    desc: "La determinación o programación deliberada del fin de la vida útil de un producto por parte del fabricante. Esto fuerza la sustitución constante de hardware no reemplazable o no reparable, acelerando el ciclo de consumo y multiplicando la chatarra electrónica."
+                }
+            ]
+        };
+
+        function playSound(freqMult = 1, type = 'sine') {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime((300 + (entries * 50)) * freqMult, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function processAction(type) {
+            if(isBlocked) return;
+            entries++;
+            
+            // La barra progresa de 10 en 10 hasta el 100%
+            debt = Math.min(debt + 10, 100);
+            
+            playSound(1, 'sine');
+            setTimeout(() => playSound(1.2, 'sine'), 50);
+
+            document.getElementById('bar').style.width = debt + "%";
+            document.getElementById('debt-val').innerText = debt;
+
+            const div = document.createElement('div');
+            div.className = 'entry';
+            
+            // Selección y alternancia ordenada de los 6 conceptos
+            let conceptData;
+            if(type === 'ai') {
+                conceptData = glossary.ai[aiClicks % glossary.ai.length];
+                aiClicks++;
+                div.innerHTML = `<strong>#${entries} AI QUERY</strong><br>Cooling: 500ml H2O<br>Labor: Invisible Data Taggers<br><span class="concept-title">CONCEPTO: ${conceptData.title}</span><small class="concept-def">${conceptData.desc}</small>`;
+            } else if(type === 'scroll') {
+                conceptData = glossary.scroll[scrollClicks % glossary.scroll.length];
+                scrollClicks++;
+                div.innerHTML = `<strong>#${entries} ATTENTION DRAIN</strong><br>Energy: Coal Grid<br>CO2: 0.5g/min<br><span class="concept-title">CONCEPTO: ${conceptData.title}</span><small class="concept-def">${conceptData.desc}</small>`;
+            } else {
+                conceptData = glossary.buy[buyClicks % glossary.buy.length];
+                buyClicks++;
+                div.innerHTML = `<strong>#${entries} TECH PURCHASE</strong><br>Mineral: Conflict Cobalt<br>Destination: Agbogbloshie<br><span class="concept-title">CONCEPTO: ${conceptData.title}</span><small class="concept-def">${conceptData.desc}</small>`;
+            }
+            content.appendChild(div);
+
+            // MOVIMIENTO TRIGONOMÉTRICO CONTINUO (Nunca deja de crecer ni de moverse)
+            let x = Math.cos(entries * 0.8) * 110;
+            let y = (entries * 35) - 150; // Incrementado ligeramente el espaciado en Y para acomodar los bloques de glosario
+            let rot = Math.sin(entries * 0.8) * 15;
+            ticket.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg)`;
+
+            if(debt >= 100) startColapse();
+        }
+
+        function startColapse() {
+            isBlocked = true;
+            document.querySelectorAll('.btn').forEach(b => b.disabled = true);
+            
+            // FASE DRAMÁTICA (2.5s)
+            document.body.style.backgroundColor = "var(--error-red)";
+            document.getElementById('phone-ui').classList.add('vibrate-heavy');
+            let errSound = setInterval(() => playSound(2, 'sawtooth'), 100);
+
+            setTimeout(() => {
+                clearInterval(errSound);
+                document.getElementById('phone-ui').classList.remove('vibrate-heavy');
+                enableReviewMode();
+            }, 2500);
+        }
+
+        function enableReviewMode() {
+            ticket.classList.add('review-mode');
+            document.body.style.backgroundColor = "#150000";
+
+            
+            document.getElementById('final-impact-btn').style.display = 'block';
+            
+            const endMsg = document.createElement('div');
+            endMsg.className = 'entry';
+            endMsg.style.background = "#000"; endMsg.style.color = "#fff"; endMsg.style.textAlign = "center";
+            endMsg.innerHTML = "FIN POR DESBORDAMIENTO DE RESIDUOS. REVISA TU GLOSARIO DE DEUDA GENERADA.";
+            content.appendChild(endMsg);
+        }
+
+        function showEpilogue() {
+            document.getElementById('epilogue').style.display = 'flex';
+        }
+
+        function armTrap() {
+            const btn = document.getElementById('trap-btn');
+            btn.classList.add('active-trap');
+            btn.innerHTML = "NO SE PUEDE BORRAR";
+        }
+
+        function triggerTrap() {
+            document.getElementById('trap-msg').style.display = 'block';
+            playSound(0.5, 'sawtooth');
+            setTimeout(() => { location.reload(); }, 6000); // Culpa interactiva
+        }
+    </script>
+</body>
+</html>

@@ -36,7 +36,7 @@
             background: #000;
             border: 8px solid #1a1a1a;
             border-radius: 45px;
-            padding: 30px;
+            padding: 25px 20px; /* Un pelín más ajustado el padding para albergar cómodamente los 6 botones */
             display: flex;
             flex-direction: column;
             position: relative;
@@ -61,15 +61,17 @@
             color: var(--green);
             border: 2px solid var(--green);
             border-radius: 15px;
-            padding: 16px;
-            margin-bottom: 18px;
+            padding: 14px; /* Reducido ligeramente de 12px para optimizar el espacio vertical */
+            margin-bottom: 15px; /* Reducido de 18px para que quepan holgadamente los 6 botones */
             font-family: 'VT323';
-            font-size: 1.2rem;
+            font-size: 1.1rem; /* Ajustado sutilmente para evitar desbordes */
             text-transform: uppercase;
             box-shadow: inset 0 0 10px var(--dark-green);
             cursor: pointer;
             position: relative;
             z-index: 40; 
+            width: 100%;
+            text-align: center;
         }
         .btn:disabled { opacity: 0.2; cursor: not-allowed; }
 
@@ -107,13 +109,12 @@
             z-index: 1000 !important;
             position: fixed;
             top: 50%; left: 50%;
-            /* Mantenemos una ligera rotación física y eliminamos el acople perfecto a los bordes del móvil */
             transform: translate(-50%, -50%) rotate(-1deg) !important;
             width: 310px !important;
             max-height: 85vh !important;
             overflow-y: scroll;
             scroll-behavior: smooth;
-            border-radius: 0px !important; /* Asegura estética pura de papel */
+            border-radius: 0px !important; 
         }
 
         .entry { padding: 15px; border-bottom: 1px dashed #bbb; font-size: 1.1rem; line-height: 1.2; }
@@ -156,10 +157,15 @@
 <body>
 
     <div class="phone" id="phone-ui">
-        <div style="text-align:center; margin-bottom:20px; opacity:0.6; z-index:40;"><h1>LA DEUDA INFINITA</h1></div>
-        <button class="btn" onclick="processAction('ai')">PREGUNTAR A CHATGPT</button>
-        <button class="btn" onclick="processAction('scroll')">VER TIKTOKS</button>
-        <button class="btn" onclick="processAction('buy')">COMPRAR NUEVOS AURICULARES</button>
+        <div style="text-align:center; margin-bottom:15px; opacity:0.6; z-index:40;">
+            <h1 style="margin: 0; font-size: 1.8rem;">LA DEUDA INFINITA</h1>
+        </div>
+        <button class="btn" onclick="processAction('ai_material')">PREGUNTAR A CHATGPT</button>
+        <button class="btn" onclick="processAction('ai_extract')">ENTRENAR MODELO IA</button>
+        <button class="btn" onclick="processAction('scroll_attention')">VER TIKTOKS</button>
+        <button class="btn" onclick="processAction('scroll_surveillance')">ACEPTAR COOKIES</button>
+        <button class="btn" onclick="processAction('buy_colonial')">COMPRAR AURICULARES</button>
+        <button class="btn" onclick="processAction('buy_obsolescence')">RENOVAR SMARTPHONE</button>
         
         <div class="debt-container">
             <div class="debt-fill" id="bar"></div>
@@ -195,47 +201,48 @@
         let entries = 0;
         let audioCtx = null;
         let isBlocked = false;
-        
-        // Contadores individuales por botón para alternar de forma ordenada los conceptos
-        let aiClicks = 0;
-        let scrollClicks = 0;
-        let buyClicks = 0;
 
         const ticket = document.getElementById('the-ticket');
         const content = document.getElementById('ticket-content');
 
-        // BBDD local del Glosario Expandido
+        // Glosario mapeado directamente 1 a 1 con los botones (Textos en español)
         const glossary = {
-            ai: [
-                {
-                    title: "Materialidad Oculta",
-                    desc: "La falsa narrativa de lo digital como algo etéreo o 'en la nube'. Cada proceso algorítmico depende de una infraestructura física masiva de servidores, cables submarinos y sistemas de refrigeración que consumen recursos naturales críticos en territorios locales."
-                },
-                {
-                    title: "Extractivismo Algorítmico",
-                    desc: "La explotación invisible de mano de obra precarizada en el Sur Global para el entrenamiento de inteligencias artificiales. Se sostiene sobre millones de microtareas humanas de etiquetado de datos y moderación de contenido, a menudo con un alto coste psicológico."
-                }
-            ],
-            scroll: [
-                {
-                    title: "Residuo Cognitivo",
-                    desc: "La degradación de la atención y la memoria humana producida por las dinámicas de optimización algorítmica. Las plataformas digitales extraen nuestro tiempo mediante bucles de retroalimentación diseñados para monetizar la atención, generando saturación mental."
-                },
-                {
-                    title: "Capitalismo de Vigilancia",
-                    desc: "Modelo de negocio que mercantiliza la experiencia humana convirtiéndola en datos de comportamiento gratuitos. Estos datos se procesan como 'superávit conductual' para predecir y modificar nuestras pautas de consumo, convirtiendo nuestra actividad en desecho comercial."
-                }
-            ],
-            buy: [
-                {
-                    title: "Colonialismo Electrónico",
-                    desc: "El traslado asimétrico de los costes ambientales y de salud del Norte al Sur Global. Los dispositivos se fabrican extrayendo minerales de conflicto y se desechan de manera informal en vertederos del extranjero, externalizando la toxicidad hacia comunidades vulnerables."
-                },
-                {
-                    title: "Obsolescencia Programada",
-                    desc: "La determinación o programación deliberada del fin de la vida útil de un producto por parte del fabricante. Esto fuerza la sustitución constante de hardware no reemplazable o no reparable, acelerando el ciclo de consumo y multiplicando la chatarra electrónica."
-                }
-            ]
+            ai_material: {
+                action: "PREGUNTA A CHATGPT",
+                cost: "Refrigeración: 500ml H2O | Carbono: 2.1g CO2",
+                title: "Materialidad Oculta",
+                desc: "La falsa narrativa de lo digital como algo etéreo o 'en la nube'. Cada proceso algorítmico depende de una infraestructura física masiva de servidores, cables submarinos y sistemas de refrigeración que consumen recursos naturales críticos."
+            },
+            ai_extract: {
+                action: "ENTRENAMIENTO MODELO IA",
+                cost: "Mano de obra: Microtareas precarizadas",
+                title: "Extractivismo Algorítmico",
+                desc: "La explotación invisible de mano de obra precarizada en el Sur Global para el entrenamiento de inteligencias artificiales. Se sostiene sobre millones de microtareas de etiquetado y moderación con un alto coste psicológico."
+            },
+            scroll_attention: {
+                action: "VER TIKTOKS",
+                cost: "Atención: Capturada | CO2: 0.5g/min",
+                title: "Residuo Cognitivo",
+                desc: "La degradación de la atención y la memoria humana producida por las dinámicas de optimización algorítmica. Las plataformas extraen nuestro tiempo mediante bucles diseñados para monetizar la atención."
+            },
+            scroll_surveillance: {
+                action: "ACEPTAR COOKIES",
+                cost: "Excedente conductual recolectado",
+                title: "Capitalismo de Vigilancia",
+                desc: "Modelo de negocio que mercantiliza la experiencia humana convirtiéndola en datos de comportamiento gratuitos para predecir y modificar nuestras pautas de consumo, transformándolas en desecho comercial."
+            },
+            buy_colonial: {
+                action: "COMPRAR AURICULARES",
+                cost: "Mineral: Cobalto de conflicto | Destino: Agbogbloshie",
+                title: "Colonialismo Electrónico",
+                desc: "El traslado asimétrico de los costes ambientales y de salud del Norte al Sur Global. Los dispositivos se fabrican extrayendo minerales de conflicto y se desechan de manera informal en vertederos vulnerables."
+            },
+            buy_obsolescence: {
+                action: "RENOVAR SMARTPHONE",
+                cost: "Vida útil: 2 años | Basura electrónica generada",
+                title: "Obsolescencia Programada",
+                desc: "La determinación o programación deliberada del fin de la vida útil de un producto por parte del fabricante. Esto fuerza la sustitución constante de hardware, multiplicando la chatarra electrónica."
+            }
         };
 
         function playSound(freqMult = 1, type = 'sine') {
@@ -252,9 +259,11 @@
 
         function processAction(type) {
             if(isBlocked) return;
-            entries++;
             
-            // La barra progresa de 10 en 10 hasta el 100%
+            const conceptData = glossary[type];
+            if(!conceptData) return;
+
+            entries++;
             debt = Math.min(debt + 10, 100);
             
             playSound(1, 'sine');
@@ -266,26 +275,17 @@
             const div = document.createElement('div');
             div.className = 'entry';
             
-            // Selección y alternancia ordenada de los 6 conceptos
-            let conceptData;
-            if(type === 'ai') {
-                conceptData = glossary.ai[aiClicks % glossary.ai.length];
-                aiClicks++;
-                div.innerHTML = `<strong>#${entries} AI QUERY</strong><br>Cooling: 500ml H2O<br>Labor: Invisible Data Taggers<br><span class="concept-title">CONCEPTO: ${conceptData.title}</span><small class="concept-def">${conceptData.desc}</small>`;
-            } else if(type === 'scroll') {
-                conceptData = glossary.scroll[scrollClicks % glossary.scroll.length];
-                scrollClicks++;
-                div.innerHTML = `<strong>#${entries} ATTENTION DRAIN</strong><br>Energy: Coal Grid<br>CO2: 0.5g/min<br><span class="concept-title">CONCEPTO: ${conceptData.title}</span><small class="concept-def">${conceptData.desc}</small>`;
-            } else {
-                conceptData = glossary.buy[buyClicks % glossary.buy.length];
-                buyClicks++;
-                div.innerHTML = `<strong>#${entries} TECH PURCHASE</strong><br>Mineral: Conflict Cobalt<br>Destination: Agbogbloshie<br><span class="concept-title">CONCEPTO: ${conceptData.title}</span><small class="concept-def">${conceptData.desc}</small>`;
-            }
+            div.innerHTML = `
+                <strong>#${entries} ${conceptData.action}</strong><br>
+                <small>${conceptData.cost}</small><br>
+                <span class="concept-title">CONCEPTO: ${conceptData.title}</span>
+                <small class="concept-def">${conceptData.desc}</small>
+            `;
             content.appendChild(div);
 
-            // MOVIMIENTO TRIGONOMÉTRICO CONTINUO (Nunca deja de crecer ni de moverse)
+            // MOVIMIENTO TRIGONOMÉTRICO CONTINUO
             let x = Math.cos(entries * 0.8) * 110;
-            let y = (entries * 35) - 150; // Incrementado ligeramente el espaciado en Y para acomodar los bloques de glosario
+            let y = (entries * 35) - 150; 
             let rot = Math.sin(entries * 0.8) * 15;
             ticket.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rot}deg)`;
 
@@ -312,7 +312,6 @@
             ticket.classList.add('review-mode');
             document.body.style.backgroundColor = "#150000";
 
-            
             document.getElementById('final-impact-btn').style.display = 'block';
             
             const endMsg = document.createElement('div');
@@ -335,7 +334,7 @@
         function triggerTrap() {
             document.getElementById('trap-msg').style.display = 'block';
             playSound(0.5, 'sawtooth');
-            setTimeout(() => { location.reload(); }, 6000); // Culpa interactiva
+            setTimeout(() => { location.reload(); }, 6000); 
         }
     </script>
 </body>
